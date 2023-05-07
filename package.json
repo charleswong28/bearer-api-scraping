@@ -1,5 +1,5 @@
 {
-  "name": "api-scraping",
+  "name": "@charleswong28/api-scraping",
   "version": "0.1.0",
   "description": "Scraping Library with auto-retry",
   "main": "index.js",
@@ -41,5 +41,13 @@
     "moduleNameMapper": {
       "axios": "axios/dist/node/axios.cjs"
     }
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/charleswong28/bearer-api-scraping.git"
+  },
+  "bugs": {
+    "url": "https://github.com/charleswong28/bearer-api-scraping/issues"
+  },
+  "homepage": "https://github.com/charleswong28/bearer-api-scraping#readme"
 }
