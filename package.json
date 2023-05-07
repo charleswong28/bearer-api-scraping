@@ -1,5 +1,5 @@
 {
-  "name": "@charleswong28/api-scraping",
+  "name": "@charleswong28/bearer-api-scraping",
   "version": "0.1.0",
   "description": "Scraping Library with auto-retry",
   "main": "index.js",
