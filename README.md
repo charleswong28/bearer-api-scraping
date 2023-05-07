@@ -1,4 +1,4 @@
-# TypeScript
+# Bearer API Scraping tool
 
 Simple scraping library with auto-retry of API with structure of `Bearer ${token}` in header.
 
