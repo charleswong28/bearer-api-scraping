@@ -11,12 +11,17 @@ type FetchOption<AccessTokenResponse> = {
   getAccessToken: (response: AccessTokenResponse) => string;
   numberOfAccessTokenRetry?: number;
   requestConfig?: AxiosRequestConfig;
+  minWaitTime?: number;
+  maxWaitTime?: number;
+  logger?: ((...data: any[]) => void)  | null | undefined;
 };
 
 const DEFAULT_OPTS = {
   numberOfRetryBeforeRefetchAccessToken: 5,
   numberOfAccessTokenRetry: 3,
   requestConfig: {},
+  minWaitTime: 0,
+  maxWaitTime: 0,
 }
 
 const resetAll = () => {
@@ -31,7 +36,7 @@ const fetchAccessToken = async <AccessTokenResponse>(options: FetchOption<Access
     const response = await axios.get<{}, AccessTokenResponse>(options.refetchAccessTokenUri, options.requestConfig);
     accessToken = options.getAccessToken(response);
   } catch (error) {
-    console.log(`Access token request failed #${accessTokenRetryCount + 1}: `, error);
+    options.logger?.(`Access token request failed #${accessTokenRetryCount + 1}: `, error);
   } finally {
     accessTokenRetryCount += 1;
   }
@@ -47,6 +52,7 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
       accessToken == null || requestRetryCount >= options.numberOfRetryBeforeRefetchAccessToken
     ) {
       await fetchAccessToken<AccessTokenResponse>(options);
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * (options.maxWaitTime - options.minWaitTime) + options.minWaitTime));
     }
 
     if (accessToken != null) {
@@ -57,10 +63,12 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
 
           return result;
         } catch (error) {
-          console.log(`Request failed #${requestRetryCount + 1} to ${uri}: `, error, );
+          options.logger?.(`Request failed #${requestRetryCount + 1} to ${uri}: `, error, );
         } finally {
           requestRetryCount += 1;
         }
+
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * (options.maxWaitTime - options.minWaitTime) + options.minWaitTime));
       } while (requestRetryCount < options.numberOfRetryBeforeRefetchAccessToken);
     }
   } while (accessTokenRetryCount < options.numberOfAccessTokenRetry);
