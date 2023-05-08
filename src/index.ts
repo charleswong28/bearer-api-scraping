@@ -10,7 +10,7 @@ type FetchOption<AccessTokenResponse> = {
   refetchAccessTokenUri: string;
   getAccessToken: (response: AccessTokenResponse) => string;
   numberOfAccessTokenRetry?: number;
-  requestConfig?: AxiosRequestConfig;
+  requestConfig?: AxiosRequestConfig<AccessTokenResponse>;
   minWaitTime?: number;
   maxWaitTime?: number;
   logger?: ((...data: any[]) => void)  | null | undefined;
@@ -19,7 +19,6 @@ type FetchOption<AccessTokenResponse> = {
 const DEFAULT_OPTS = {
   numberOfRetryBeforeRefetchAccessToken: 5,
   numberOfAccessTokenRetry: 3,
-  requestConfig: {},
   minWaitTime: 0,
   maxWaitTime: 0,
 }
@@ -59,7 +58,13 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
       requestRetryCount = 0;
       do {
         try {
-          const result = await func(uri, options.requestConfig);
+          const result = await func(uri, {
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              ...(options.requestConfig?.headers || {}),
+            },
+            ...(options.requestConfig || {}),
+          });
 
           return result;
         } catch (error) {
