@@ -5,12 +5,13 @@ let accessTokenRetryCount = 0;
 
 type RequestFunc<T> = (url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
 
-type FetchOption<AccessTokenResponse> = {
+type FetchOption<FetchResponse, AccessTokenResponse> = {
   numberOfRetryBeforeRefetchAccessToken?: number;
   refetchAccessTokenUri: string;
+  refetchAccessTokenUriConfig?: AxiosRequestConfig<AccessTokenResponse>;
   getAccessToken: (response: AccessTokenResponse) => string;
   numberOfAccessTokenRetry?: number;
-  requestConfig?: AxiosRequestConfig<AccessTokenResponse>;
+  requestConfig?: AxiosRequestConfig<FetchResponse>;
   minWaitTime?: number;
   maxWaitTime?: number;
   logger?: ((...data: any[]) => void)  | null | undefined;
@@ -28,11 +29,11 @@ const resetAll = () => {
   accessTokenRetryCount = 0;
 }
 
-const fetchAccessToken = async <AccessTokenResponse>(options: FetchOption<AccessTokenResponse>) => {
+const fetchAccessToken = async <FetchResponse, AccessTokenResponse>(options: FetchOption<FetchResponse, AccessTokenResponse>) => {
   try {
     accessToken = null;
 
-    const response = await axios.get<{}, AccessTokenResponse>(options.refetchAccessTokenUri, options.requestConfig);
+    const response = await axios.get<{}, AccessTokenResponse>(options.refetchAccessTokenUri, options.refetchAccessTokenUriConfig);
     accessToken = options.getAccessToken(response);
   } catch (error) {
     options.logger?.(`Access token request failed #${accessTokenRetryCount + 1}: `, error);
@@ -41,7 +42,7 @@ const fetchAccessToken = async <AccessTokenResponse>(options: FetchOption<Access
   }
 }
 
-const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<FetchResponse>, uri: string, opts: FetchOption<AccessTokenResponse>) => {
+const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<FetchResponse>, uri: string, opts: FetchOption<FetchResponse, AccessTokenResponse>) => {
   const options = { ...DEFAULT_OPTS, ...opts };
 
   let requestRetryCount = 0;
@@ -50,7 +51,7 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
     if (
       accessToken == null || requestRetryCount >= options.numberOfRetryBeforeRefetchAccessToken
     ) {
-      await fetchAccessToken<AccessTokenResponse>(options);
+      await fetchAccessToken<FetchResponse, AccessTokenResponse>(options);
       await new Promise((resolve) => setTimeout(resolve, Math.random() * (options.maxWaitTime - options.minWaitTime) + options.minWaitTime));
     }
 
@@ -81,11 +82,11 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
   throw new Error('API request failed.');
 }
 
-const get = <AccessTokenResponse, FetchResponse>(uri: string, opts: FetchOption<AccessTokenResponse>) => {
+const get = <AccessTokenResponse, FetchResponse>(uri: string, opts: FetchOption<FetchResponse, AccessTokenResponse>) => {
   return fetch<AccessTokenResponse, FetchResponse>(axios.get, uri, opts);
 };
 
-const post = <AccessTokenResponse, FetchResponse>(uri: string, opts: FetchOption<AccessTokenResponse>) => {
+const post = <AccessTokenResponse, FetchResponse>(uri: string, opts: FetchOption<FetchResponse, AccessTokenResponse>) => {
   return fetch<AccessTokenResponse, FetchResponse>(axios.post, uri, opts);
 };
 
