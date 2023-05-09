@@ -58,8 +58,9 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
     if (accessToken != null) {
       requestRetryCount = 0;
       do {
+        let result;
         try {
-          const result = await func(uri, {
+          result = await func(uri, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
               ...(options.requestConfig?.headers || {}),
@@ -70,6 +71,10 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
           return result;
         } catch (error) {
           options.logger?.(`Request failed #${requestRetryCount + 1} to ${uri}: `, error, );
+
+          if (requestRetryCount >= options.numberOfRetryBeforeRefetchAccessToken - 1 && result?.status === 404) {
+            return null;
+          }
         } finally {
           requestRetryCount += 1;
         }
