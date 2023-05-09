@@ -61,7 +61,7 @@ const fetch = async <AccessTokenResponse, FetchResponse>(func: RequestFunc<Fetch
         try {
           const result = await func(uri, {
             headers: {
-              authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
               ...(options.requestConfig?.headers || {}),
             },
             ...(options.requestConfig || {}),
